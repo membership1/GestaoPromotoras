@@ -1,0 +1,50 @@
+﻿{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card text-center p-3 shadow-sm"><div class="card-body"><h5>{{ total_promotoras }}</h5><p class="card-text text-body-secondary">Promotoras Ativas</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3 shadow-sm"><div class="card-body"><h5>{{ total_lojas }}</h5><p class="card-text text-body-secondary">Lojas Cadastradas</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3 shadow-sm"><div class="card-body"><h5>{{ relatorios_hoje }}</h5><p class="card-text text-body-secondary">Relatórios Hoje</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3 shadow-sm"><div class="card-body"><h5>{{ checkins_hoje }}</h5><p class="card-text text-body-secondary">Check-ins Hoje</p></div></div></div>
+</div>
+
+<div class="row">
+    <div class="col-md-8"><div class="card shadow-sm"><div class="card-body"><canvas id="reportsChart"></canvas></div></div></div>
+    <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><canvas id="checkinsChart"></canvas></div></div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Gráfico de Relatórios por Dia
+  const ctxReports = document.getElementById('reportsChart');
+  new Chart(ctxReports, {
+    type: 'bar',
+    data: {
+      labels: {{ report_labels | tojson }},
+      datasets: [{
+        label: 'Relatórios por Dia',
+        data: {{ report_data | tojson }},
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  // Gráfico de Check-ins por Tipo
+  const ctxCheckins = document.getElementById('checkinsChart');
+  new Chart(ctxCheckins, {
+    type: 'doughnut',
+    data: {
+      labels: {{ checkin_labels | tojson }},
+      datasets: [{
+        label: 'Check-ins Hoje',
+        data: {{ checkin_data | tojson }},
+        backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 159, 64, 0.5)'],
+        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 159, 64, 1)'],
+      }]
+    }
+  });
+</script>
+{% endblock %}

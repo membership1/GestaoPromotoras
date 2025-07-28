@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4"><i class="bi bi-box-arrow-in-right me-2"></i>Login</h2>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="login_field" class="form-label">Usuário Master ou Telefone da Promotora</label>
+                        <input class="form-control" id="login_field" name="login_field" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha (apenas para Master)</label>
+                        <input class="form-control" id="senha" name="senha" type="password">
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-primary" type="submit">Entrar</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <small class="text-body-secondary">Promotora: use o telefone. Master: use usuário e senha.</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

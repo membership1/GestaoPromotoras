@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="bi bi-person-circle me-2"></i>Área da Promotora</h2>
+    <a href="{{ url_for('logout') }}" class="btn btn-sm logout-btn" title="Sair"><i class="bi bi-box-arrow-left"></i> Sair</a>
+</div>
+<ul class="nav nav-pills nav-fill mb-4 shadow-sm p-2 bg-body-tertiary rounded">
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('formulario') }}"><i class="bi bi-journal-plus"></i> Relatório Diário</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('enviar_nota') }}"><i class="bi bi-receipt"></i> Enviar Nota Fiscal</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="{{ url_for('checkin') }}"><i class="bi bi-geo-alt-fill"></i> Check-in / Checkout</a>
+    </li>
+</ul>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form id="checkinForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+
+            <div class="mb-3">
+                <label class="form-label">Tipo de Registro</label>
+                <select name="tipo" class="form-select" required>
+                    <option value="checkin">Check-in (Entrada)</option>
+                    <option value="checkout">Checkout (Saída)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="imagem" class="form-label">Foto Obrigatória (selfie, fachada da loja, etc.)</label>
+                <input class="form-control" type="file" id="imagem" name="imagem" accept="image/*" required>
+            </div>
+            <div class="d-grid">
+                <button id="submitBtn" type="submit" class="btn btn-success">
+                    <span id="btn-text">Obter Localização e Registrar</span>
+                    <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if registros %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-clock-history"></i> Seus Registros Recentes</h5></div>
+    <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th>Tipo</th><th>Data/Hora</th><th>Localização (Lat, Lon)</th><th>Imagem</th></tr></thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td><span class="badge text-bg-{{ 'primary' if r.tipo == 'checkin' else 'secondary' }}">{{ r.tipo.capitalize() }}</span></td>
+                <td>{{ r.data_hora }}</td>
+                <td>{{ '%.4f'|format(r.latitude) }}, {{ '%.4f'|format(r.longitude) if r.longitude }}</td>
+                <td><a href="{{ url_for('static', filename='uploads/'+r.imagem_path) }}" target="_blank">Ver</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{% endif %}
+
+
+<script>
+document.getElementById('checkinForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Impede o envio normal do formulário
+
+    const form = this;
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+
+    // Mostra o spinner e desabilita o botão
+    btnText.textContent = 'Obtendo localização...';
+    btnSpinner.classList.remove('d-none');
+    submitBtn.disabled = true;
+
+    if (!navigator.geolocation) {
+        alert('Geolocalização não é suportada pelo seu navegador.');
+        // Restaura o botão
+        btnText.textContent = 'Obter Localização e Registrar';
+        btnSpinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        return;
+    }
+
+    function success(position) {
+        const latitude  = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        // Preenche os campos ocultos do formulário
+        document.getElementById('latitude').value = latitude;
+        document.getElementById('longitude').value = longitude;
+
+        // Envia o formulário
+        form.submit();
+    }
+
+    function error() {
+        alert('Não foi possível obter sua localização. Verifique se a permissão foi concedida ao navegador.');
+        // Restaura o botão em caso de erro
+        btnText.textContent = 'Obter Localização e Registrar';
+        btnSpinner.classList.add('d-none');
+        submitBtn.disabled = false;
+    }
+
+    navigator.geolocation.getCurrentPosition(success, error);
+});
+</script>
+{% endblock %}

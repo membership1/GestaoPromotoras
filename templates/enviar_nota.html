@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="bi bi-person-circle me-2"></i>Área da Promotora</h2>
+    <a href="{{ url_for('logout') }}" class="btn btn-sm logout-btn" title="Sair"><i class="bi bi-box-arrow-left"></i> Sair</a>
+</div>
+
+<ul class="nav nav-pills nav-fill mb-4 shadow-sm p-2 bg-body-tertiary rounded">
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('formulario') }}"><i class="bi bi-journal-plus"></i> Relatório Diário</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="{{ url_for('enviar_nota') }}"><i class="bi bi-receipt"></i> Enviar Nota Fiscal</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('checkin') }}"><i class="bi bi-geo-alt-fill"></i> Check-in / Checkout</a>
+    </li>
+</ul>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="bi bi-receipt"></i> Envio de Notas Fiscais</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="nota" class="form-label">Selecione o arquivo da nota fiscal (PNG, JPG, GIF)</label>
+                <input class="form-control" type="file" id="nota" name="nota" accept="image/*" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-success"><i class="bi bi-upload"></i> Enviar Nota</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if notas_enviadas %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Notas Enviadas Recentemente</h5>
+    </div>
+    <div class="card-body">
+        <ul class="list-group">
+            {% for nota in notas_enviadas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-image"></i> {{ nota.nota_img }}</span>
+                <small>{{ nota.data_hora }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
