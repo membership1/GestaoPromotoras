@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # O comando para executar sua aplicação usando Waitress (o Render define a $PORT)
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=${PORT}", "app:app"]
+CMD waitress-serve --host=0.0.0.0 --port=${PORT} app:app
