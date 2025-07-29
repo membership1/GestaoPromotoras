@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, g
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from waitress import serve
 
 # --- Configuração da Aplicação ---
 app = Flask(__name__)
@@ -103,39 +104,31 @@ def login():
         senha_input = request.form.get('senha', '')
         db = get_db()
 
-        # Tenta autenticar como Promotora primeiro (pelo telefone)
         user_db = db.execute("SELECT * FROM usuarios WHERE telefone = ? AND tipo = 'promotora'", (login_input,)).fetchone()
-
         if user_db:
-            # Se encontrou uma promotora, gera a senha padrão para verificação
             senha_a_checar = f"hub@{user_db['telefone']}"
             if check_password_hash(user_db['senha_hash'], senha_a_checar):
-                # Senha correta, agora verifica se está ativa
                 if not user_db['ativo']:
                     flash('Este usuário está inativo e não pode fazer login.', 'warning')
                     return redirect(url_for('login'))
-
-                # Login bem-sucedido
+                
                 session.clear()
                 session['user_id'] = user_db['id']
                 session['user_name'] = user_db['nome_completo']
                 session['user_type'] = user_db['tipo']
                 return redirect(url_for('formulario'))
-
-        # Se não autenticou como promotora, tenta como Master
+        
         user_db = db.execute("SELECT * FROM usuarios WHERE usuario = ? AND tipo = 'master'", (login_input,)).fetchone()
         if user_db and check_password_hash(user_db['senha_hash'], senha_input):
-            # Login Master bem-sucedido
             session.clear()
             session['user_id'] = user_db['id']
             session['user_name'] = user_db['nome_completo']
             session['user_type'] = user_db['tipo']
             return redirect(url_for('admin_redirect'))
 
-        # Se chegou até aqui, nenhuma autenticação funcionou
         flash('Login ou senha inválidos.', 'danger')
         return redirect(url_for('login'))
-
+        
     return render_template('login.html', title="Login")
 
 @app.route('/formulario', methods=['GET', 'POST'])
@@ -179,8 +172,7 @@ def enviar_nota():
 
 @app.route('/checkin', methods=['GET', 'POST'])
 def checkin():
-    if 'user_type' not in session or session['user_type'] != 'promotora':
-        return redirect(url_for('login'))
+    if 'user_type' not in session or session['user_type'] != 'promotora': return redirect(url_for('login'))
     db = get_db()
     user = db.execute("SELECT * FROM usuarios WHERE id = ?", (session['user_id'],)).fetchone()
     if request.method == 'POST':
@@ -195,11 +187,9 @@ def checkin():
         extensao = imagem_file.filename.rsplit('.', 1)[1].lower()
         nome_arquivo = secure_filename(f"{tipo}_{user['id']}_{timestamp}.{extensao}")
         imagem_file.save(os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo))
-        db.execute("""
-            INSERT INTO checkins (usuario_id, loja_id, tipo, data_hora, latitude, longitude, imagem_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (session['user_id'], user['loja_id'], tipo, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 
-              latitude, longitude, nome_arquivo))
+        db.execute(
+            "INSERT INTO checkins (usuario_id, loja_id, tipo, data_hora, latitude, longitude, imagem_path) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (session['user_id'], user['loja_id'], tipo, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), latitude, longitude, nome_arquivo))
         db.commit()
         flash(f'{tipo.capitalize()} registrado com sucesso!', 'success')
         return redirect(url_for('checkin'))
@@ -305,59 +295,33 @@ def excluir_nota(id):
 
 @app.route('/admin/promotora/add', methods=['POST'])
 def add_promotora():
-    if 'user_type' not in session or session['user_type'] != 'master': 
-        return redirect(url_for('login'))
-
-    # 1. Coleta os dados do formulário
+    if 'user_type' not in session or session['user_type'] != 'master': return redirect(url_for('login'))
     telefone = request.form['telefone']
     nome_completo = request.form['nome_completo']
-
-    # 2. Gera a senha padrão e seu hash
     senha_gerada = f"hub@{telefone}"
     senha_hash = generate_password_hash(senha_gerada)
-
-    # 3. Define o 'usuário' interno como o próprio telefone para garantir unicidade
     usuario_login = telefone 
-
     db = get_db()
     try:
-        # 4. Insere todos os dados no banco
-        db.execute("""
-            INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf)
-            VALUES (?, ?, 'promotora', ?, ?, ?, ?, ?, ?)
-        """, (usuario_login, senha_hash, request.form['loja_id'], nome_completo, 
-              request.form['cpf'], telefone, request.form['cidade'], request.form['uf']))
+        db.execute("INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf) VALUES (?, ?, 'promotora', ?, ?, ?, ?, ?, ?)", (usuario_login, senha_hash, request.form['loja_id'], nome_completo, request.form['cpf'], telefone, request.form['cidade'], request.form['uf']))
         db.commit()
         flash(f"Promotora '{nome_completo}' cadastrada! Login: {telefone} | Senha: {senha_gerada}", 'success')
-    except sqlite3.IntegrityError as e:
-        flash(f"Erro: Não foi possível cadastrar. Verifique se o CPF ou Telefone já existem.", 'danger')
-
+    except sqlite3.IntegrityError as e: flash(f"Erro: Não foi possível cadastrar. Verifique se o CPF ou Telefone já existem.", 'danger')
     return redirect(url_for('gerenciamento'))
 
 @app.route('/admin/promotora/edit/<int:id>', methods=['GET', 'POST'])
 def edit_promotora(id):
-    if 'user_type' not in session or session['user_type'] != 'master':
-        return redirect(url_for('login'))
-
+    if 'user_type' not in session or session['user_type'] != 'master': return redirect(url_for('login'))
     db = get_db()
     if request.method == 'POST':
-        db.execute("""
-            UPDATE usuarios SET nome_completo = ?, cpf = ?, telefone = ?, cidade = ?, uf = ?, loja_id = ?
-            WHERE id = ?
-        """, (request.form['nome_completo'], request.form['cpf'], request.form['telefone'], 
-              request.form['cidade'], request.form['uf'], request.form['loja_id'], id))
+        db.execute("UPDATE usuarios SET nome_completo = ?, cpf = ?, telefone = ?, cidade = ?, uf = ?, loja_id = ? WHERE id = ?", (request.form['nome_completo'], request.form['cpf'], request.form['telefone'], request.form['cidade'], request.form['uf'], request.form['loja_id'], id))
         db.commit()
         flash("Dados da promotora atualizados com sucesso.", 'success')
         return redirect(url_for('gerenciamento'))
-
-    # Lógica GET para exibir o formulário
     promotora = db.execute("SELECT * FROM usuarios WHERE id = ?", (id,)).fetchone()
-
-    # Adiciona uma verificação para garantir que a promotora existe
     if promotora is None:
         flash(f"Promotora com ID {id} não foi encontrada.", "danger")
         return redirect(url_for('gerenciamento'))
-
     lojas = db.execute("SELECT * FROM lojas ORDER BY razao_social").fetchall()
     return render_template('edit_promotora.html', promotora=promotora, lojas=lojas, title="Editar Promotora")
 
@@ -484,5 +448,5 @@ def logout():
 if __name__ == '__main__':
     create_schema_file()
     init_db()
-    # Usando Waitress para servir a aplicação em produção
-    serve(app, host='0.0.0.0', port=5000)
+    # Usando Waitress para testes locais de forma similar à produção
+    serve(app, host='127.0.0.1', port=5000)
