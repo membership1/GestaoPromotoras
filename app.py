@@ -100,26 +100,42 @@ def create_schema_file():
 def login():
     if request.method == 'POST':
         login_input = request.form['login_field']
+        senha_input = request.form.get('senha', '')
         db = get_db()
-        user_db = db.execute("SELECT * FROM usuarios WHERE usuario = ? AND tipo = 'master'", (login_input,)).fetchone()
-        senha_a_checar = request.form.get('senha', '')
-        if not user_db:
-            user_db = db.execute("SELECT * FROM usuarios WHERE telefone = ?", (login_input,)).fetchone()
-            if user_db:
-                senha_a_checar = f"hub@{user_db['telefone']}"
 
-        if user_db and check_password_hash(user_db['senha_hash'], senha_a_checar):
-            if not user_db['ativo']:
-                flash('Este usuário está inativo e não pode fazer login.', 'warning')
-                return redirect(url_for('login'))
+        # Tenta autenticar como Promotora primeiro (pelo telefone)
+        user_db = db.execute("SELECT * FROM usuarios WHERE telefone = ? AND tipo = 'promotora'", (login_input,)).fetchone()
+
+        if user_db:
+            # Se encontrou uma promotora, gera a senha padrão para verificação
+            senha_a_checar = f"hub@{user_db['telefone']}"
+            if check_password_hash(user_db['senha_hash'], senha_a_checar):
+                # Senha correta, agora verifica se está ativa
+                if not user_db['ativo']:
+                    flash('Este usuário está inativo e não pode fazer login.', 'warning')
+                    return redirect(url_for('login'))
+
+                # Login bem-sucedido
+                session.clear()
+                session['user_id'] = user_db['id']
+                session['user_name'] = user_db['nome_completo']
+                session['user_type'] = user_db['tipo']
+                return redirect(url_for('formulario'))
+
+        # Se não autenticou como promotora, tenta como Master
+        user_db = db.execute("SELECT * FROM usuarios WHERE usuario = ? AND tipo = 'master'", (login_input,)).fetchone()
+        if user_db and check_password_hash(user_db['senha_hash'], senha_input):
+            # Login Master bem-sucedido
             session.clear()
             session['user_id'] = user_db['id']
             session['user_name'] = user_db['nome_completo']
             session['user_type'] = user_db['tipo']
             return redirect(url_for('admin_redirect'))
-        else:
-            flash('Login ou senha inválidos.', 'danger')
-            return redirect(url_for('login'))
+
+        # Se chegou até aqui, nenhuma autenticação funcionou
+        flash('Login ou senha inválidos.', 'danger')
+        return redirect(url_for('login'))
+
     return render_template('login.html', title="Login")
 
 @app.route('/formulario', methods=['GET', 'POST'])
@@ -289,16 +305,33 @@ def excluir_nota(id):
 
 @app.route('/admin/promotora/add', methods=['POST'])
 def add_promotora():
-    if 'user_type' not in session or session['user_type'] != 'master': return redirect(url_for('login'))
+    if 'user_type' not in session or session['user_type'] != 'master': 
+        return redirect(url_for('login'))
+
+    # 1. Coleta os dados do formulário
     telefone = request.form['telefone']
+    nome_completo = request.form['nome_completo']
+
+    # 2. Gera a senha padrão e seu hash
     senha_gerada = f"hub@{telefone}"
     senha_hash = generate_password_hash(senha_gerada)
+
+    # 3. Define o 'usuário' interno como o próprio telefone para garantir unicidade
+    usuario_login = telefone 
+
     db = get_db()
     try:
-        db.execute("INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf) VALUES (?, ?, 'promotora', ?, ?, ?, ?, ?, ?)", (telefone, senha_hash, request.form['loja_id'], request.form['nome_completo'], request.form['cpf'], telefone, request.form['cidade'], request.form['uf']))
+        # 4. Insere todos os dados no banco
+        db.execute("""
+            INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf)
+            VALUES (?, ?, 'promotora', ?, ?, ?, ?, ?, ?)
+        """, (usuario_login, senha_hash, request.form['loja_id'], nome_completo, 
+              request.form['cpf'], telefone, request.form['cidade'], request.form['uf']))
         db.commit()
-        flash(f"Promotora '{request.form['nome_completo']}' cadastrada com sucesso! A senha é '{senha_gerada}'.", 'success')
-    except sqlite3.IntegrityError as e: flash(f"Erro ao cadastrar promotora: {e}. Verifique se CPF ou Telefone já existem.", 'danger')
+        flash(f"Promotora '{nome_completo}' cadastrada! Login: {telefone} | Senha: {senha_gerada}", 'success')
+    except sqlite3.IntegrityError as e:
+        flash(f"Erro: Não foi possível cadastrar. Verifique se o CPF ou Telefone já existem.", 'danger')
+
     return redirect(url_for('gerenciamento'))
 
 @app.route('/admin/promotora/edit/<int:id>', methods=['GET', 'POST'])
