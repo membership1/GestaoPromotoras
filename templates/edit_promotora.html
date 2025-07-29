@@ -1,31 +1,32 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <h2 class="mb-4"><i class="bi bi-person-fill-gear"></i> Editar Promotora - {{ promotora.nome_completo }}</h2>
 <div class="card p-4 shadow-sm">
     <form method="POST">
         <div class="row g-3">
             <div class="col-md-12">
-                <label>Nome Completo</label>
+                <label class="form-label">Nome Completo</label>
                 <input class="form-control" name="nome_completo" value="{{ promotora.nome_completo }}" required>
             </div>
             <div class="col-md-6">
-                <label>CPF</label>
-                <input class="form-control" name="cpf" value="{{ promotora.cpf }}">
+                <label class="form-label">CPF</label>
+                <input class="form-control" name="cpf" value="{{ promotora.cpf or '' }}">
             </div>
             <div class="col-md-6">
-                <label>Telefone (Login)</label>
+                <label class="form-label">Telefone (Login)</label>
                 <input class="form-control" name="telefone" value="{{ promotora.telefone }}" required>
             </div>
             <div class="col-md-6">
-                <label>Cidade</label>
-                <input class="form-control" name="cidade" value="{{ promotora.cidade }}">
+                <label class="form-label">Cidade</label>
+                <input class="form-control" name="cidade" value="{{ promotora.cidade or '' }}">
             </div>
             <div class="col-md-6">
-                <label>UF</label>
-                <input class="form-control" name="uf" value="{{ promotora.uf }}" maxlength="2">
+                <label class="form-label">UF</label>
+                <input class="form-control" name="uf" value="{{ promotora.uf or '' }}" maxlength="2">
             </div>
             <div class="col-md-12">
-                <label>Loja</label>
+                <label class="form-label">Loja</label>
                 <select class="form-select" name="loja_id" required>
                     {% for loja in lojas %}
                     <option value="{{ loja.id }}" {% if promotora.loja_id == loja.id %}selected{% endif %}>
@@ -38,7 +39,7 @@
         <p class="text-body-secondary small mt-3">Nota: A senha não pode ser alterada por aqui. O padrão é sempre "hub@telefone".</p>
         <div class="mt-4">
             <button class="btn btn-success" type="submit"><i class="bi bi-save"></i> Salvar Alterações</button>
-            <a href="{{ url_for('admin') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ url_for('gerenciamento') }}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

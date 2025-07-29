@@ -303,14 +303,28 @@ def add_promotora():
 
 @app.route('/admin/promotora/edit/<int:id>', methods=['GET', 'POST'])
 def edit_promotora(id):
-    if 'user_type' not in session or session['user_type'] != 'master': return redirect(url_for('login'))
+    if 'user_type' not in session or session['user_type'] != 'master':
+        return redirect(url_for('login'))
+
     db = get_db()
     if request.method == 'POST':
-        db.execute("UPDATE usuarios SET nome_completo = ?, cpf = ?, telefone = ?, cidade = ?, uf = ?, loja_id = ? WHERE id = ?", (request.form['nome_completo'], request.form['cpf'], request.form['telefone'], request.form['cidade'], request.form['uf'], request.form['loja_id'], id))
+        db.execute("""
+            UPDATE usuarios SET nome_completo = ?, cpf = ?, telefone = ?, cidade = ?, uf = ?, loja_id = ?
+            WHERE id = ?
+        """, (request.form['nome_completo'], request.form['cpf'], request.form['telefone'], 
+              request.form['cidade'], request.form['uf'], request.form['loja_id'], id))
         db.commit()
         flash("Dados da promotora atualizados com sucesso.", 'success')
         return redirect(url_for('gerenciamento'))
+
+    # Lógica GET para exibir o formulário
     promotora = db.execute("SELECT * FROM usuarios WHERE id = ?", (id,)).fetchone()
+
+    # Adiciona uma verificação para garantir que a promotora existe
+    if promotora is None:
+        flash(f"Promotora com ID {id} não foi encontrada.", "danger")
+        return redirect(url_for('gerenciamento'))
+
     lojas = db.execute("SELECT * FROM lojas ORDER BY razao_social").fetchall()
     return render_template('edit_promotora.html', promotora=promotora, lojas=lojas, title="Editar Promotora")
 
