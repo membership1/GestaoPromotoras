@@ -12,13 +12,20 @@ from waitress import serve
 # --- Configuração da Aplicação ---
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'um_segredo_muito_forte')
+
+# TODAS AS CONFIGURAÇÕES VÊM PRIMEIRO:
 app.config['DATABASE'] = 'database.db'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'xlsx', 'xls'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# O BLOCO DE INICIALIZAÇÃO DO BANCO DE DADOS VEM DEPOIS DAS CONFIGURAÇÕES:
+with app.app_context():
+    create_schema_file()
+    init_db()
 
-# --- Funções de Banco de Dados (SQLite) ---
+# E SÓ ENTÃO COMEÇAM AS FUNÇÕES DO BANCO DE DADOS:
+# --- Funções de Banco de Dados ---
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
