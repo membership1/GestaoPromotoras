@@ -12,19 +12,12 @@ from waitress import serve
 # --- Configuração da Aplicação ---
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'um_segredo_muito_forte')
-
-# TODAS AS CONFIGURAÇÕES VÊM PRIMEIRO:
 app.config['DATABASE'] = 'database.db'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'xlsx', 'xls'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# O BLOCO DE INICIALIZAÇÃO DO BANCO DE DADOS VEM DEPOIS DAS CONFIGURAÇÕES:
-with app.app_context():
-    create_schema_file()
-    init_db()
 
-# E SÓ ENTÃO COMEÇAM AS FUNÇÕES DO BANCO DE DADOS:
 # --- Funções de Banco de Dados ---
 def get_db():
     db = getattr(g, '_database', None)
@@ -38,30 +31,6 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-def init_db():
-    with app.app_context():
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios';")
-        if not cursor.fetchone():
-            with open('schema.sql', 'r') as f:
-                db.executescript(f.read())
-            # Dados Iniciais
-            master_pass_hash = generate_password_hash('admin')
-            cursor.execute("INSERT INTO usuarios (usuario, senha_hash, tipo, nome_completo) VALUES (?, ?, ?, ?)",
-                           ('master', master_pass_hash, 'master', 'Administrador Master'))
-            cursor.execute("INSERT INTO lojas (razao_social, bandeira, cnpj, av_rua, cidade, uf) VALUES (?, ?, ?, ?, ?, ?)",
-                           ('Loja A', 'Bandeira A', '11111111000111', 'Rua Exemplo, 123', 'São Paulo', 'SP'))
-            
-            telefone_ana = '11987654321'
-            senha_ana_gerada = f"hub@{telefone_ana}"
-            ana_pass_hash = generate_password_hash(senha_ana_gerada)
-            cursor.execute("""
-                INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (telefone_ana, ana_pass_hash, 'promotora', 1, 'Ana Silva', '12345678900', telefone_ana, 'São Paulo', 'SP'))
-            db.commit()
 
 def create_schema_file():
     if not os.path.exists('schema.sql'):
@@ -102,6 +71,34 @@ def create_schema_file():
                 FOREIGN KEY (loja_id) REFERENCES lojas(id)
             );
             ''')
+
+def init_db():
+    with app.app_context():
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios';")
+        if not cursor.fetchone():
+            create_schema_file() # Garante que o schema.sql seja criado se não existir
+            with open('schema.sql', 'r') as f:
+                db.executescript(f.read())
+            # Dados Iniciais
+            master_pass_hash = generate_password_hash('admin')
+            cursor.execute("INSERT INTO usuarios (usuario, senha_hash, tipo, nome_completo) VALUES (?, ?, ?, ?)",
+                           ('master', master_pass_hash, 'master', 'Administrador Master'))
+            cursor.execute("INSERT INTO lojas (razao_social, bandeira, cnpj, av_rua, cidade, uf) VALUES (?, ?, ?, ?, ?, ?)",
+                           ('Loja A', 'Bandeira A', '11111111000111', 'Rua Exemplo, 123', 'São Paulo', 'SP'))
+            
+            telefone_ana = '11987654321'
+            senha_ana_gerada = f"hub@{telefone_ana}"
+            ana_pass_hash = generate_password_hash(senha_ana_gerada)
+            
+            # ***** CORREÇÃO APLICADA AQUI *****
+            # A coluna 'usuario' agora também recebe o telefone, para ser consistente
+            cursor.execute("""
+                INSERT INTO usuarios (usuario, senha_hash, tipo, loja_id, nome_completo, cpf, telefone, cidade, uf) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (telefone_ana, ana_pass_hash, 'promotora', 1, 'Ana Silva', '12345678900', telefone_ana, 'São Paulo', 'SP'))
+            db.commit()
 
 # --- ROTAS ---
 @app.route('/', methods=['GET', 'POST'])
@@ -392,7 +389,7 @@ def importar_lojas():
             df.columns = [col.strip().upper() for col in df.columns]
             for index, row in df.iterrows():
                 if pd.isna(row['CNPJ']): continue
-                sql = "INSERT INTO lojas (razao_social, cnpj, bandeira, av_rua, cidade, uf) VALUES (:RAZAO_SOCIAL, :CNPJ, :BANDEIRA, :ENDERECO, :CIDADE, :UF) ON CONFLICT(cnpj) DO UPDATE SET razao_social=excluded.razao_social, bandeira=excluded.bandeira, av_rua=excluded.av_rua, cidade=excluded.cidade, uf=excluded.uf;"
+                sql = "INSERT INTO lojas (razao_social, cnpj, bandeira, av_rua, cidade, uf) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(cnpj) DO UPDATE SET razao_social=excluded.razao_social, bandeira=excluded.bandeira, av_rua=excluded.av_rua, cidade=excluded.cidade, uf=excluded.uf;"
                 row_dict = row.fillna('').to_dict()
                 cursor.execute(sql, row_dict)
             db.commit()
@@ -436,9 +433,9 @@ def importar_promotoras():
                 telefone = str(row['TELEFONE'])
                 senha_gerada = f"hub@{telefone}"
                 senha_hash = generate_password_hash(senha_gerada)
-                sql = "INSERT INTO usuarios (usuario, senha_hash, tipo, nome_completo, cpf, telefone, cidade, uf, loja_id) VALUES (:TELEFONE, :senha_hash, 'promotora', :NOME, :CPF, :TELEFONE, :CIDADE, :UF, :loja_id) ON CONFLICT(telefone) DO UPDATE SET nome_completo=excluded.nome_completo, cpf=excluded.cpf, cidade=excluded.cidade, uf=excluded.uf, loja_id=excluded.loja_id;"
+                sql = "INSERT INTO usuarios (usuario, senha_hash, tipo, nome_completo, cpf, telefone, cidade, uf, loja_id) VALUES (?, ?, 'promotora', ?, ?, ?, ?, ?, ?) ON CONFLICT(telefone) DO UPDATE SET nome_completo=excluded.nome_completo, cpf=excluded.cpf, cidade=excluded.cidade, uf=excluded.uf, loja_id=excluded.loja_id;"
                 row_dict = row.fillna('').to_dict()
-                row_dict.update({'senha_hash': senha_hash, 'loja_id': loja_id})
+                row_dict.update({'senha_hash': senha_hash, 'loja_id': loja_id, 'usuario': telefone})
                 cursor.execute(sql, row_dict)
             db.commit()
             flash(f'Planilha de promotoras importada! {linhas_ignoradas} linhas foram ignoradas por CNPJ inválido.', 'success' if linhas_ignoradas == 0 else 'warning')
@@ -453,14 +450,11 @@ def logout():
     flash('Você foi desconectado com sucesso.', 'info')
     return redirect(url_for('login'))
 
-if __name__ == '__main__':
+# --- BLOCO DE INICIALIZAÇÃO ---
+with app.app_context():
     create_schema_file()
     init_db()
+    
+if __name__ == '__main__':
     # Para teste local fácil com debug e reload automático
-    #app.run(host='127.0.0.1', port=5000, debug=True)
-    
-    # Para teste local com o servidor de produção (sem debug ou reload)
-    # serve(app, host='127.0.0.1', port=5000)
-    
-    # Usando Waitress para servir a aplicação de forma similar à produção
-    serve(app, host='0.0.0.0', port=5000)
+    app.run(host='127.0.0.1', port=5000, debug=True)
