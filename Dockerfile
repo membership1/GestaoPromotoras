@@ -1,8 +1,9 @@
 # Usar uma imagem base oficial do Python
 FROM python:3.11-slim
 
-# Instalar as dependências de sistema exigidas pelo Pygame (bibliotecas SDL2)
-RUN apt-get update && apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+# Instalar ferramentas de compilação do sistema para pacotes complexos
+# Isso previne erros caso alguma dependência precise compilar algo
+RUN apt-get update && apt-get install -y build-essential gcc
 
 # Definir o diretório de trabalho dentro do contêiner
 WORKDIR /app

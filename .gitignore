@@ -1,0 +1,17 @@
+# Ambientes Virtuais
+venv/
+.venv/
+env/
+
+# Arquivos compilados do Python
+__pycache__/
+*.pyc
+
+# Banco de dados local
+database.db
+schema.sql
+
+# Arquivos de IDEs e sistemas operacionais
+.vscode/
+.idea/
+.DS_Store
