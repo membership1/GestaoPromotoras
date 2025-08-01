@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\klebe\Desktop\prototipo_relatorio_promotoras\Gemini\GestaoPromotoras\venv"
+set "VIRTUAL_ENV=C:\Prototipos\GestaoPromotoras\venv"
 
 if not defined PROMPT set PROMPT=$P$G
 

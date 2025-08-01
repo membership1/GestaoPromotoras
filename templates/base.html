@@ -39,9 +39,10 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="adminNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('gerenciamento') }}">Gerenciamento</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('performance') }}">Performance</a></li>
+						<li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+						<li class="nav-item"><a class="nav-link" href="{{ url_for('gerenciamento') }}">Gerenciamento</a></li>
+						<li class="nav-item"><a class="nav-link" href="{{ url_for('performance') }}">Performance</a></li>
+						<li class="nav-item"><a class="nav-link" href="{{ url_for('relatorios') }}">Relatórios</a></li> 
                     </ul>
                     <a href="{{ url_for('logout') }}" class="btn btn-sm logout-btn" title="Sair"><i class="bi bi-box-arrow-left"></i> Sair</a>
                 </div>

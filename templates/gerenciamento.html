@@ -2,254 +2,262 @@
 
 {% block content %}
 <div class="accordion" id="adminAccordion">
+  
+  <!-- Gestão de Grupos -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrupos"><i class="bi bi-collection-fill me-2"></i>Gestão de Grupos</button></h2>
+    <div id="collapseGrupos" class="accordion-collapse collapse show" data-bs-parent="#adminAccordion"><div class="accordion-body">
+        <p>Crie grupos para organizar suas lojas e personalizar os campos dos relatórios de cada um.</p>
+        <a href="{{ url_for('gerenciar_grupos') }}" class="btn btn-primary">Gerenciar Grupos e Campos</a>
+    </div></div>
+  </div>
 
-    <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLojas"><i class="bi bi-building me-2"></i>Gestão de Lojas</button></h2>
-        <div id="collapseLojas" class="accordion-collapse collapse show" data-bs-parent="#adminAccordion">
-            <div class="accordion-body">
+  <!-- Gestão de Lojas -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLojas"><i class="bi bi-building me-2"></i>Gestão de Lojas</button></h2>
+    <div id="collapseLojas" class="accordion-collapse collapse" data-bs-parent="#adminAccordion"><div class="accordion-body">
+      
+      <div class="card bg-body-tertiary mb-5 p-3 border-secondary">
+          <h5 class="card-title"><i class="bi bi-gear-wide-connected"></i> Operações em Massa (Lojas)</h5>
+          <form action="{{ url_for('importar_lojas') }}" method="post" enctype="multipart/form-data">
+              <div class="row g-3 align-items-end">
+                  <div class="col-md-5">
+                      <label class="form-label">1. Selecione o Grupo para importar</label>
+                      <select name="grupo_id_import" class="form-select" required>
+                          <option value="">Selecione um grupo...</option>
+                          {% for grupo in grupos %}
+                          <option value="{{ grupo.id }}">{{ grupo.nome }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+                  <div class="col-md-5">
+                      <label class="form-label">2. Selecione o arquivo Excel</label>
+                      <input type="file" name="planilha_lojas" class="form-control" required>
+                  </div>
+                  <div class="col-md-2">
+                      <button type="submit" class="btn btn-primary w-100"><i class="bi bi-upload"></i> Importar</button>
+                  </div>
+              </div>
+          </form>
+          <hr>
+          <a href="{{ url_for('exportar_lojas') }}" class="btn btn-info mt-2"><i class="bi bi-download"></i> Exportar Todas as Lojas</a>
+      </div>
 
-                <div class="card bg-body-tertiary mb-5 p-3 border-secondary">
-                    <h5 class="card-title"><i class="bi bi-gear-wide-connected"></i> Operações em Massa (Lojas)</h5>
-                    <p class="card-text text-body-secondary small">Use os botões abaixo para importar ou exportar dados de lojas em formato Excel (.xlsx).</p>
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <a href="{{ url_for('exportar_lojas') }}" class="btn btn-info"><i class="bi bi-download"></i> Exportar Lojas</a>
-                        <form action="{{ url_for('importar_lojas') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 mb-0">
-                            <input type="file" name="planilha_lojas" class="form-control form-control-sm" required>
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importar</button>
-                        </form>
-                    </div>
-                </div>
+      <h5><i class="bi bi-plus-circle me-1"></i>Adicionar Nova Loja</h5>
+      <form class="mb-5" method="POST" action="{{ url_for('add_loja') }}">
+          <div class="row g-3">
+              <div class="col-md-6"><input class="form-control" name="razao_social" placeholder="Razão Social" required></div>
+              <div class="col-md-6"><input class="form-control" name="bandeira" placeholder="Bandeira"></div>
+              <div class="col-md-4"><input class="form-control" name="cnpj" placeholder="CNPJ"></div>
+              <div class="col-md-8"><input class="form-control" name="av_rua" placeholder="Av/Rua"></div>
+              <div class="col-md-6"><input class="form-control" name="cidade" placeholder="Cidade"></div>
+              <div class="col-md-3"><input class="form-control" name="uf" placeholder="UF" maxlength="2"></div>
+              <div class="col-md-3">
+                  <select name="grupo_id" class="form-select" required>
+                      <option value="">Selecione um Grupo</option>
+                      {% for grupo in grupos %}
+                      <option value="{{ grupo.id }}">{{ grupo.nome }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+              <div class="col-12"><button class="btn btn-primary" type="submit">Adicionar Loja</button></div>
+          </div>
+      </form>
 
-                <h5><i class="bi bi-plus-circle me-1"></i>Adicionar Nova Loja</h5>
-                <form class="mb-5" method="POST" action="{{ url_for('add_loja') }}">
-                    <div class="row g-3">
-                        <div class="col-md-6"><input class="form-control" name="razao_social" placeholder="Razão Social" required></div>
-                        <div class="col-md-6"><input class="form-control" name="bandeira" placeholder="Bandeira"></div>
-                        <div class="col-md-4"><input class="form-control" name="cnpj" placeholder="CNPJ"></div>
-                        <div class="col-md-8"><input class="form-control" name="av_rua" placeholder="Av/Rua"></div>
-                        <div class="col-md-8"><input class="form-control" name="cidade" placeholder="Cidade"></div>
-                        <div class="col-md-4"><input class="form-control" name="uf" placeholder="UF" maxlength="2"></div>
-                        <div class="col-12"><button class="btn btn-primary" type="submit">Adicionar Loja</button></div>
-                    </div>
-                </form>
-
-                <h5><i class="bi bi-shop me-1"></i>Lojas Existentes</h5>
-                <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-3">
-                    <div class="input-group">
-                        <input type="text" name="search_lojas" class="form-control" placeholder="Pesquisar por razão social..." value="{{ filtros.search_lojas or '' }}">
-                        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-                    </div>
-                </form>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead><tr><th>Razão Social</th><th>CNPJ</th><th>Cidade/UF</th><th>Ações</th></tr></thead>
-                        <tbody>
-                            {% for loja in lojas %}
-                            <tr><td>{{ loja.razao_social }}</td><td>{{ loja.cnpj }}</td><td>{{ loja.cidade }}/{{ loja.uf }}</td><td><a href="{{ url_for('edit_loja', id=loja.id) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a></td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        {% for p in range(1, (total_pages_lojas or 1) + 1) %}
-                        <li class="page-item {% if p == current_page_lojas %}active{% endif %}"><a class="page-link" href="{{ url_for('gerenciamento', page_lojas=p, search_lojas=search_lojas) }}">{{ p }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </nav>
+      <h5><i class="bi bi-shop me-1"></i>Lojas Existentes</h5>
+      <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-3">
+        <div class="input-group">
+          <input type="text" name="search_lojas" class="form-control" placeholder="Pesquisar por razão social..." value="{{ search_lojas or '' }}">
+          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+      </form>
+      <div class="table-responsive"><table class="table table-hover align-middle">
+        <thead><tr><th>Razão Social</th><th>Grupo</th><th>CNPJ</th><th>Cidade/UF</th><th>Ações</th></tr></thead>
+        <tbody>
+          {% for loja in lojas %}
+          <tr><td>{{ loja.razao_social }}</td><td><span class="badge bg-secondary">{{ loja.grupo_nome or 'Sem Grupo' }}</span></td><td>{{ loja.cnpj }}</td><td>{{ loja.cidade }}/{{ loja.uf }}</td><td><a href="{{ url_for('edit_loja', id=loja.id) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a></td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+      <nav><ul class="pagination justify-content-center">
+        {% for p in range(1, (total_pages_lojas or 1) + 1) %}
+        <li class="page-item {% if p == current_page_lojas %}active{% endif %}"><a class="page-link" href="{{ url_for('gerenciamento', page_lojas=p, search_lojas=search_lojas) }}">{{ p }}</a></li>
+        {% endfor %}
+      </ul></nav>
+    </div></div>
+  </div>
+  
+  <!-- Gestão de Promotoras -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePromotoras"><i class="bi bi-person-plus me-2"></i>Gestão de Promotoras</button></h2>
+    <div id="collapsePromotoras" class="accordion-collapse collapse" data-bs-parent="#adminAccordion"><div class="accordion-body">
+        
+        <div class="card bg-body-tertiary mb-5 p-3 border-secondary">
+            <h5 class="card-title"><i class="bi bi-gear-wide-connected"></i> Operações em Massa (Promotoras)</h5>
+            <p class="card-text text-body-secondary small">Importe ou exporte dados de promotoras. O CNPJ na planilha é usado para vincular à loja.</p>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <a href="{{ url_for('exportar_promotoras') }}" class="btn btn-info"><i class="bi bi-download"></i> Exportar Promotoras</a>
+              <form action="{{ url_for('importar_promotoras') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 mb-0">
+                  <input type="file" name="planilha_promotoras" class="form-control form-control-sm" required>
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importar</button>
+              </form>
             </div>
         </div>
-    </div>
 
-    <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePromotoras"><i class="bi bi-person-plus me-2"></i>Gestão de Promotoras</button></h2>
-        <div id="collapsePromotoras" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
-            <div class="accordion-body">
-
-                <div class="card bg-body-tertiary mb-5 p-3 border-secondary">
-                    <h5 class="card-title"><i class="bi bi-gear-wide-connected"></i> Operações em Massa (Promotoras)</h5>
-                    <p class="card-text text-body-secondary small">Importe ou exporte dados de promotoras. O CNPJ na planilha é usado para vincular à loja.</p>
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <a href="{{ url_for('exportar_promotoras') }}" class="btn btn-info"><i class="bi bi-download"></i> Exportar Promotoras</a>
-                        <form action="{{ url_for('importar_promotoras') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 mb-0">
-                            <input type="file" name="planilha_promotoras" class="form-control form-control-sm" required>
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Importar</button>
-                        </form>
-                    </div>
+        <h5><i class="bi bi-plus-circle me-1"></i>Cadastrar Nova Promotora</h5>
+        <p class="text-body-secondary small">O login será o telefone e a senha será gerada automaticamente no formato "hub@telefone".</p>
+        <form class="mb-5" method="POST" action="{{ url_for('add_promotora') }}">
+            <div class="row g-3">
+                <div class="col-md-6"><input class="form-control" name="nome_completo" placeholder="Nome Completo" required></div>
+                <div class="col-md-6"><input class="form-control" name="cpf" placeholder="CPF (somente números)"></div>
+                <div class="col-md-6"><input class="form-control" name="telefone" placeholder="Telefone com DDD (somente números)" required></div>
+                <div class="col-md-6"><input class="form-control" name="cidade" placeholder="Cidade"></div>
+                <div class="col-md-6"><input class="form-control" name="uf" placeholder="UF" maxlength="2"></div>
+                <div class="col-md-6">
+                    <select class="form-select" name="loja_id" required>
+                        <option value="">Selecione a Loja</option>
+                        {% for loja in lojas_all %}<option value="{{ loja.id }}">{{ loja.razao_social }}</option>{% endfor %}
+                    </select>
                 </div>
-
-                <h5><i class="bi bi-plus-circle me-1"></i>Cadastrar Nova Promotora</h5>
-                <p class="text-body-secondary small">O login será o telefone e a senha será gerada automaticamente no formato "hub@telefone".</p>
-                <form class="mb-5" method="POST" action="{{ url_for('add_promotora') }}">
-                    <div class="row g-3">
-                        <div class="col-md-6"><input class="form-control" name="nome_completo" placeholder="Nome Completo" required></div>
-                        <div class="col-md-6"><input class="form-control" name="cpf" placeholder="CPF (somente números)"></div>
-                        <div class="col-md-6"><input class="form-control" name="telefone" placeholder="Telefone com DDD (somente números)" required></div>
-                        <div class="col-md-6"><input class="form-control" name="cidade" placeholder="Cidade"></div>
-                        <div class="col-md-6"><input class="form-control" name="uf" placeholder="UF" maxlength="2"></div>
-                        <div class="col-md-6">
-                            <select class="form-select" name="loja_id" required>
-                                <option value="">Selecione a Loja</option>
-                                {% for loja in lojas_all %}
-                                <option value="{{ loja.id }}">{{ loja.razao_social }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-12"><button class="btn btn-primary" type="submit">Cadastrar Promotora</button></div>
-                    </div>
-                </form>
-
-                <h5><i class="bi bi-people me-1"></i>Promotoras Cadastradas</h5>
-                <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-3">
-                    <div class="input-group">
-                        <input type="text" name="search_promotoras" class="form-control" placeholder="Pesquisar por nome..." value="{{ filtros.search_promotoras or '' }}">
-                        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-                    </div>
-                </form>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead><tr><th>Status</th><th>Nome Completo</th><th>Telefone (Login)</th><th>Loja Associada</th><th>Ações</th></tr></thead>
-                        <tbody>
-                            {% for p in promotoras %}
-                            <tr>
-                                <td>
-                                    {% if p.ativo %}
-                                    <span class="badge text-bg-success">Ativa</span>
-                                    {% else %}
-                                    <span class="badge text-bg-danger">Inativa</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ p.nome_completo }}</td>
-                                <td>{{ p.telefone }}</td>
-                                <td>{{ p.razao_social or 'N/A' }}</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="{{ url_for('edit_promotora', id=p.id) }}" class="btn btn-sm btn-outline-warning" title="Editar"><i class="bi bi-pencil"></i></a>
-                                        <form action="{{ url_for('toggle_active_promotora', id=p.id) }}" method="POST" class="d-inline">
-                                            {% if p.ativo %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Inativar"><i class="bi bi-x-circle"></i></button>
-                                            {% else %}
-                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Ativar"><i class="bi bi-check-circle"></i></button>
-                                            {% endif %}
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        {% for p in range(1, (total_pages_promotoras or 1) + 1) %}
-                        <li class="page-item {% if p == current_page_promotoras %}active{% endif %}"><a class="page-link" href="{{ url_for('gerenciamento', page_promotoras=p, search_promotoras=search_promotoras) }}">{{ p }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </nav>
+                <div class="col-12"><button class="btn btn-primary" type="submit">Cadastrar Promotora</button></div>
             </div>
+        </form>
+
+        <h5><i class="bi bi-people me-1"></i>Promotoras Cadastradas</h5>
+        <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="search_promotoras" class="form-control" placeholder="Pesquisar por nome..." value="{{ search_promotoras or '' }}">
+            <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
         </div>
-    </div>
-
-    <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNotas"><i class="bi bi-receipt me-2"></i>Notas Fiscais Enviadas</button></h2>
-        <div id="collapseNotas" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
-            <div class="accordion-body">
-
-                <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-4 card bg-body-tertiary p-3">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-3"><label class="form-label">Promotora</label><select name="filtro_promotora_id" class="form-select"><option value="">Todas</option>{% for p in promotoras_all %}<option value="{{ p.id }}" {% if filtros.promotora_id==p.id|string %}selected{% endif %}>{{ p.nome_completo }}</option>{% endfor %}</select></div>
-                        <div class="col-md-3"><label class="form-label">Loja</label><select name="filtro_loja_id" class="form-select"><option value="">Todas</option>{% for l in lojas_all %}<option value="{{ l.id }}" {% if filtros.loja_id==l.id|string %}selected{% endif %}>{{ l.razao_social }}</option>{% endfor %}</select></div>
-                        <div class="col-md-2"><label class="form-label">UF</label><input type="text" name="filtro_uf" class="form-control" value="{{ filtros.uf }}"></div>
-                        <div class="col-md-2"><label class="form-label">Data Início</label><input type="date" name="filtro_data_inicio" class="form-control" value="{{ filtros.data_inicio }}"></div>
-                        <div class="col-md-2"><label class="form-label">Data Fim</label><input type="date" name="filtro_data_fim" class="form-control" value="{{ filtros.data_fim }}"></div>
-                        <div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Filtrar Notas</button></div>
-                    </div>
-                </form>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>UF</th><th>Ações</th></tr></thead>
-                        <tbody>
-                            {% for nf in notas_fiscais %}
-                            <tr>
-                                <td>{{ nf.data_hora }}</td>
-                                <td>{{ nf.usuario_nome }}</td>
-                                <td>{{ nf.razao_social }}</td>
-                                <td>{{ nf.uf }}</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="{{ url_for('static', filename='uploads/'+nf.nota_img) if nf.nota_img else '#' }}" download class="btn btn-sm btn-outline-primary" title="Download"><i class="bi bi-download"></i></a>
-                                        <form action="{{ url_for('excluir_nota', id=nf.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta nota?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRelatorios"><i class="bi bi-clock-history me-2"></i>Histórico de Relatórios</button></h2>
-        <div id="collapseRelatorios" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
-            <div class="accordion-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>Vendas</th><th>Abord.</th><th>Brindes</th><th>Qtd. Notas</th></tr></thead>
-                        <tbody>
-                            {% for r in relatorios %}
-                            <tr>
-                                <td>{{ r.data_hora }}</td>
-                                <td>{{ r.usuario_nome }}</td>
-                                <td>{{ r.razao_social }}</td>
-                                <td>{{ r.venda_percebida }}</td>
-                                <td>{{ r.abordagens }}</td>
-                                <td>{{ (r.brindes1 or 0) + (r.brindes2 or 0) + (r.brindes3 or 0) }}</td>
-                                <td><span class="badge rounded-pill text-bg-secondary">{{ r.notas_no_dia }}</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCheckins"><i class="bi bi-geo-alt-fill me-2"></i>Histórico de Check-ins</button></h2>
-        <div id="collapseCheckins" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
-            <div class="accordion-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-bordered">
-                        <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>Tipo</th><th>Localização</th><th>Imagem</th></tr></thead>
-                        <tbody>
-                            {% for c in checkins %}
-                            <tr>
-                                <td>{{ c.data_hora }}</td>
-                                <td>{{ c.nome_completo }}</td>
-                                <td>{{ c.razao_social }}</td>
-                                <td><span class="badge text-bg-{{ 'primary' if c.tipo == 'checkin' else 'secondary' }}">{{ c.tipo.capitalize() }}</span></td>
-                                <td>
-                                    {% if c.latitude and c.longitude %}
-                                    <a href="https://www.google.com/maps?q={{c.latitude}},{{c.longitude}}" target="_blank">Ver no Mapa</a>
-                                    {% else %}
-                                    N/A
-                                    {% endif %}
-                                </td>
-                                <td><a href="{{ url_for('static', filename='uploads/'+c.imagem_path) }}" target="_blank">Ver Imagem</a></td>
-                            </tr>
+        </form>
+        <div class="table-responsive"><table class="table table-hover align-middle">
+        <thead><tr><th>Status</th><th>Nome Completo</th><th>Telefone (Login)</th><th>Loja Associada</th><th>Ações</th></tr></thead>
+        <tbody>
+            {% for p in promotoras %}
+            <tr>
+                <td>
+                    {% if p.ativo %}
+                        <span class="badge text-bg-success">Ativa</span>
+                    {% else %}
+                        <span class="badge text-bg-danger">Inativa</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.nome_completo }}</td>
+                <td>{{ p.telefone }}</td>
+                <td>{{ p.razao_social or 'N/A' }}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{{ url_for('edit_promotora', id=p.id) }}" class="btn btn-sm btn-outline-warning" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <form action="{{ url_for('toggle_active_promotora', id=p.id) }}" method="POST" class="d-inline">
+                            {% if p.ativo %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Inativar"><i class="bi bi-x-circle"></i></button>
                             {% else %}
-                            <tr><td colspan="6" class="text-center">Nenhum registro de check-in encontrado.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Ativar"><i class="bi bi-check-circle"></i></button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table></div>
+        <nav><ul class="pagination justify-content-center">
+        {% for p in range(1, (total_pages_promotoras or 1) + 1) %}
+        <li class="page-item {% if p == current_page_promotoras %}active{% endif %}"><a class="page-link" href="{{ url_for('gerenciamento', page_promotoras=p, search_promotoras=search_promotoras) }}">{{ p }}</a></li>
+        {% endfor %}
+        </ul></nav>
+    </div></div>
+  </div>
+
+  <!-- Notas Fiscais Enviadas -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNotas"><i class="bi bi-receipt me-2"></i>Notas Fiscais Enviadas</button></h2>
+    <div id="collapseNotas" class="accordion-collapse collapse" data-bs-parent="#adminAccordion"><div class="accordion-body">
+      
+      <form method="GET" action="{{ url_for('gerenciamento') }}" class="mb-4 card bg-body-tertiary p-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3"><label class="form-label">Promotora</label><select name="filtro_promotora_id" class="form-select"><option value="">Todas</option>{% for p in promotoras_all %}<option value="{{ p.id }}" {% if filtros.promotora_id == p.id|string %}selected{% endif %}>{{ p.nome_completo }}</option>{% endfor %}</select></div>
+          <div class="col-md-3"><label class="form-label">Loja</label><select name="filtro_loja_id" class="form-select"><option value="">Todas</option>{% for l in lojas_all %}<option value="{{ l.id }}" {% if filtros.loja_id == l.id|string %}selected{% endif %}>{{ l.razao_social }}</option>{% endfor %}</select></div>
+          <div class="col-md-2"><label class="form-label">UF</label><input type="text" name="filtro_uf" class="form-control" value="{{ filtros.uf }}"></div>
+          <div class="col-md-2"><label class="form-label">Data Início</label><input type="date" name="filtro_data_inicio" class="form-control" value="{{ filtros.data_inicio }}"></div>
+          <div class="col-md-2"><label class="form-label">Data Fim</label><input type="date" name="filtro_data_fim" class="form-control" value="{{ filtros.data_fim }}"></div>
+          <div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Filtrar Notas</button></div>
         </div>
-    </div>
+      </form>
+
+      <div class="table-responsive"><table class="table table-bordered table-hover">
+        <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>UF</th><th>Ações</th></tr></thead>
+        <tbody>
+          {% for nf in notas_fiscais %}
+          <tr>
+            <td>{{ nf.data_hora }}</td>
+            <td>{{ nf.usuario_nome }}</td>
+            <td>{{ nf.razao_social }}</td>
+            <td>{{ nf.uf }}</td>
+            <td>
+                <div class="btn-group">
+                    <a href="{{ url_for('static', filename='uploads/'+nf.nota_img) if nf.nota_img else '#' }}" download class="btn btn-sm btn-outline-primary" title="Download"><i class="bi bi-download"></i></a>
+                    <form action="{{ url_for('excluir_nota', id=nf.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta nota?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </div></div>
+  </div>
+  
+  <!-- Histórico de Relatórios -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRelatorios"><i class="bi bi-clock-history me-2"></i>Histórico de Relatórios</button></h2>
+    <div id="collapseRelatorios" class="accordion-collapse collapse" data-bs-parent="#adminAccordion"><div class="accordion-body">
+      <div class="table-responsive"><table class="table table-bordered table-hover">
+        <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>Qtd. Notas</th></tr></thead>
+        <tbody>
+          {% for r in relatorios %}
+          <tr>
+            <td>{{ r.data_hora }}</td>
+            <td>{{ r.usuario_nome }}</td>
+            <td>{{ r.razao_social }}</td>
+            <td><span class="badge rounded-pill text-bg-secondary">{{ r.notas_no_dia }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </div></div>
+  </div>
+
+  <!-- Histórico de Check-ins -->
+  <div class="accordion-item">
+    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCheckins"><i class="bi bi-geo-alt-fill me-2"></i>Histórico de Check-ins</button></h2>
+    <div id="collapseCheckins" class="accordion-collapse collapse" data-bs-parent="#adminAccordion"><div class="accordion-body">
+        <div class="table-responsive"><table class="table table-hover table-bordered">
+            <thead><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>Tipo</th><th>Localização</th><th>Imagem</th></tr></thead>
+            <tbody>
+                {% for c in checkins %}
+                <tr>
+                    <td>{{ c.data_hora }}</td>
+                    <td>{{ c.nome_completo }}</td>
+                    <td>{{ c.razao_social }}</td>
+                    <td><span class="badge text-bg-{{ 'primary' if c.tipo == 'checkin' else 'secondary' }}">{{ c.tipo.capitalize() }}</span></td>
+                    <td>
+                        {% if c.latitude and c.longitude %}
+                        <a href="https://www.google.com/maps?q={{c.latitude}},{{c.longitude}}" target="_blank">Ver no Mapa</a>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ url_for('static', filename='uploads/'+c.imagem_path) }}" target="_blank">Ver Imagem</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center">Nenhum registro de check-in encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table></div>
+    </div></div>
+  </div>
 
 </div>
 {% endblock %}

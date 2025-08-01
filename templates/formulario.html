@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-
+<!-- O menu de navegação da promotora continua o mesmo -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0"><i class="bi bi-person-circle me-2"></i>Área da Promotora</h2>
     <a href="{{ url_for('logout') }}" class="btn btn-sm logout-btn" title="Sair"><i class="bi bi-box-arrow-left"></i> Sair</a>
 </div>
-
 <ul class="nav nav-pills nav-fill mb-4 shadow-sm p-2 bg-body-tertiary rounded">
     <li class="nav-item">
         <a class="nav-link active" aria-current="page" href="{{ url_for('formulario') }}"><i class="bi bi-journal-plus"></i> Relatório Diário</a>
@@ -18,36 +17,30 @@
     </li>
 </ul>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header">
-        <button class="btn btn-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#address-info">
-          <i class="bi bi-geo-alt"></i> Mostrar/Ocultar Dados da Loja
-        </button>
-    </div>
-    <div id="address-info" class="collapse"><div class="card-body">
-        <p><strong>Razão Social:</strong> {{ user.razao_social }}</p>
-        <p><strong>Endereço:</strong> {{ user.av_rua }}, {{ user.cidade }} - {{ user.uf }}</p>
-    </div></div>
-</div>
-
 <div class="card shadow-sm">
+    <div class="card-header"><h4 class="mb-0">Relatório Diário - {{ user.razao_social }}</h4></div>
     <div class="card-body p-4">
-        <form method="POST" enctype="multipart/form-data">
+        {% if campos %}
+        <form method="POST">
             <div class="row">
-                <div class="col-md-4 mb-3"><label>Venda Percebida:</label><input class="form-control" name="venda_percebida" type="number" required></div>
-                <div class="col-md-4 mb-3"><label>Abordagens:</label><input class="form-control" name="abordagens" type="number" required></div>
-                <div class="col-md-4 mb-3"><label>Brindes 1:</label><input class="form-control" name="brindes1" type="number" required></div>
-                <div class="col-md-6 mb-3"><label>Brindes 2:</label><input class="form-control" name="brindes2" type="number" required></div>
-                <div class="col-md-6 mb-3"><label>Brindes 3:</label><input class="form-control" name="brindes3" type="number" required></div>
+                <!-- Loop para criar os campos dinamicamente -->
+                {% for campo in campos %}
+                <div class="col-md-6 mb-3">
+                    <label for="campo_{{ campo.id }}" class="form-label">{{ campo.label_campo }}</label>
+                    <input type="number" class="form-control" id="campo_{{ campo.id }}" name="campo_{{ campo.id }}" required>
+                </div>
+                {% endfor %}
             </div>
-            <hr>
-            <div class="row mt-3">
-                <div class="col-md-12 mb-3"><label>Foto Checkout:</label><input class="form-control" name="checkout" type="file" accept="image/*" required></div>
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-success mt-3" type="submit"><i class="bi bi-check-circle"></i> Enviar Relatório</button>
+            <div class="d-grid mt-3">
+              <button class="btn btn-success" type="submit"><i class="bi bi-check-circle"></i> Enviar Relatório</button>
             </div>
         </form>
+        {% else %}
+        <div class="alert alert-warning text-center">
+            <p class="mb-0">Não há campos de relatório configurados para o grupo da sua loja.</p>
+            <p class="mb-0 small">Por favor, peça ao administrador para configurar os campos.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

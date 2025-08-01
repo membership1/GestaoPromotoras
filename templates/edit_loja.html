@@ -1,36 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2 class="mb-4"><i class="bi bi-pencil"></i> Editar Loja - {{ loja.razao_social }}</h2>
-<div class="card p-4">
+<div class="card p-4 shadow-sm">
     <form method="POST">
-      <div class="row">
-        <div class="col-md-6 mb-3">
-            <label>Razão Social</label>
-            <input class="form-control" name="razao_social" value="{{ loja.razao_social }}" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label>Bandeira</label>
-            <input class="form-control" name="bandeira" value="{{ loja.bandeira }}">
-        </div>
-        <div class="col-md-6 mb-3">
-            <label>CNPJ</label>
-            <input class="form-control" name="cnpj" value="{{ loja.cnpj }}">
-        </div>
-        <div class="col-md-6 mb-3">
-            <label>Av/Rua</label>
-            <input class="form-control" name="av_rua" value="{{ loja.av_rua }}">
-        </div>
-        <div class="col-md-9 mb-3">
-            <label>Cidade</label>
-            <input class="form-control" name="cidade" value="{{ loja.cidade }}">
-        </div>
-        <div class="col-md-3 mb-3">
-            <label>UF</label>
-            <input class="form-control" name="uf" value="{{ loja.uf }}" maxlength="2">
+      <div class="row g-3">
+        <div class="col-md-6"><label>Razão Social</label><input class="form-control" name="razao_social" value="{{ loja.razao_social }}" required></div>
+        <div class="col-md-6"><label>Bandeira</label><input class="form-control" name="bandeira" value="{{ loja.bandeira }}"></div>
+        <div class="col-md-6"><label>CNPJ</label><input class="form-control" name="cnpj" value="{{ loja.cnpj }}"></div>
+        <div class="col-md-6"><label>Av/Rua</label><input class="form-control" name="av_rua" value="{{ loja.av_rua }}"></div>
+        <div class="col-md-6"><label>Cidade</label><input class="form-control" name="cidade" value="{{ loja.cidade }}"></div>
+        <div class="col-md-3"><label>UF</label><input class="form-control" name="uf" value="{{ loja.uf }}" maxlength="2"></div>
+        <!-- CAMPO DE SELEÇÃO DE GRUPO -->
+        <div class="col-md-3">
+            <label>Grupo</label>
+            <select name="grupo_id" class="form-select" required>
+                <option value="">Selecione um Grupo</option>
+                {% for grupo in grupos %}
+                <option value="{{ grupo.id }}" {% if loja.grupo_id == grupo.id %}selected{% endif %}>{{ grupo.nome }}</option>
+                {% endfor %}
+            </select>
         </div>
       </div>
-      <button class="btn btn-success mt-2" type="submit"><i class="bi bi-save"></i> Salvar</button>
-      <a href="{{ url_for('admin') }}" class="btn btn-outline-light mt-2">Cancelar</a>
+      <div class="mt-4">
+        <button class="btn btn-success" type="submit"><i class="bi bi-save"></i> Salvar</button>
+        <a href="{{ url_for('gerenciamento') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
     </form>
 </div>
 {% endblock %}
