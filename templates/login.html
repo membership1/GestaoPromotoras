@@ -20,12 +20,12 @@
 
                 <form method="POST">
                     <div class="mb-3">
-                        <label for="login_field" class="form-label">Usuário Master ou Telefone da Promotora</label>
+                        <label for="login_field" class="form-label">Usuário ou Telefone</label>
                         <input class="form-control" id="login_field" name="login_field" required>
                     </div>
                     <div class="mb-3">
-                        <label for="senha" class="form-label">Senha (apenas para Master)</label>
-                        <input class="form-control" id="senha" name="senha" type="password">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input class="form-control" id="senha" name="senha" type="password" required>
                     </div>
                     <div class="d-grid">
                         <button class="btn btn-primary" type="submit">Entrar</button>
@@ -33,7 +33,7 @@
                 </form>
             </div>
             <div class="card-footer text-center">
-                <small class="text-body-secondary">Promotora: use o telefone. Master: use usuário e senha.</small>
+                <small class="text-body-secondary">Promotora, a sua senha padrão é: <strong>hub@seu_telefone</strong></small>
             </div>
         </div>
     </div>

@@ -26,14 +26,16 @@
                 <input class="form-control" name="uf" value="{{ promotora.uf or '' }}" maxlength="2">
             </div>
             <div class="col-md-12">
-                <label class="form-label">Loja</label>
-                <select class="form-select" name="loja_id" required>
+                <label class="form-label">Lojas Associadas</label>
+                <!-- SELETOR DE MÚLTIPLAS LOJAS -->
+                <select class="form-select" name="loja_ids" multiple required size="8">
                     {% for loja in lojas %}
-                    <option value="{{ loja.id }}" {% if promotora.loja_id == loja.id %}selected{% endif %}>
+                    <option value="{{ loja.id }}" {% if loja.id in lojas_associadas_ids %}selected{% endif %}>
                         {{ loja.razao_social }}
                     </option>
                     {% endfor %}
                 </select>
+                <div class="form-text">Segure Ctrl (ou Cmd em Mac) para selecionar mais de uma.</div>
             </div>
         </div>
         <p class="text-body-secondary small mt-3">Nota: A senha não pode ser alterada por aqui. O padrão é sempre "hub@telefone".</p>

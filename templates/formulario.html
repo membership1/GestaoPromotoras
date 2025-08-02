@@ -18,29 +18,99 @@
 </ul>
 
 <div class="card shadow-sm">
-    <div class="card-header"><h4 class="mb-0">Relatório Diário - {{ user.razao_social }}</h4></div>
+    <div class="card-header">
+        <h4 class="mb-0">
+            Relatório Diário
+            {% if lojas|length == 1 %}
+                - {{ lojas[0].razao_social }}
+            {% endif %}
+        </h4>
+    </div>
     <div class="card-body p-4">
-        {% if campos %}
-        <form method="POST">
-            <div class="row">
-                <!-- Loop para criar os campos dinamicamente -->
-                {% for campo in campos %}
-                <div class="col-md-6 mb-3">
-                    <label for="campo_{{ campo.id }}" class="form-label">{{ campo.label_campo }}</label>
-                    <input type="number" class="form-control" id="campo_{{ campo.id }}" name="campo_{{ campo.id }}" required>
+        <form method="POST" id="reportForm">
+            
+            <!-- SELETOR DE LOJA: Aparece apenas se a promotora tiver mais de uma loja -->
+            {% if lojas|length > 1 %}
+            <div class="mb-4">
+                <label for="loja_id_selector" class="form-label fw-bold">1. Selecione a Loja</label>
+                <select name="loja_id" id="loja_id_selector" class="form-select">
+                    <option value="">-- Escolha uma loja --</option>
+                    {% for loja in lojas %}
+                    <option value="{{ loja.id }}" {% if loja.id == loja_selecionada_id %}selected{% endif %}>
+                        {{ loja.razao_social }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <script>
+                // Submete o formulário via GET para carregar os campos da loja selecionada
+                document.getElementById('loja_id_selector').addEventListener('change', function() {
+                    const selectedLojaId = this.value;
+                    if (selectedLojaId) {
+                        window.location.href = `{{ url_for('formulario') }}?loja_id=${selectedLojaId}`;
+                    }
+                });
+            </script>
+            {% elif lojas|length == 1 %}
+                <!-- Se houver apenas uma loja, envia o ID de forma oculta -->
+                <input type="hidden" name="loja_id" value="{{ lojas[0].id }}">
+            {% endif %}
+
+            <!-- CAMPOS DO RELATÓRIO: Carregados dinamicamente -->
+            {% if campos %}
+                <div class="row">
+                    {% if lojas|length > 1 %}<h5 class="mb-3">2. Preencha os dados do relatório</h5>{% endif %}
+                    {% for campo in campos %}
+                    <div class="col-md-6 mb-3">
+                        <label for="campo_{{ campo.id }}" class="form-label">{{ campo.label_campo }}</label>
+                        <input type="number" class="form-control" id="campo_{{ campo.id }}" name="campo_{{ campo.id }}" required>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-            <div class="d-grid mt-3">
-              <button class="btn btn-success" type="submit"><i class="bi bi-check-circle"></i> Enviar Relatório</button>
-            </div>
+                <div class="d-grid mt-3">
+                  <button class="btn btn-success" type="submit"><i class="bi bi-check-circle"></i> Enviar Relatório</button>
+                </div>
+            {% elif loja_selecionada_id %}
+                <div class="alert alert-warning text-center">
+                    <p class="mb-0">Não há campos de relatório configurados para o grupo da loja selecionada.</p>
+                    <p class="mb-0 small">Por favor, peça ao administrador para configurar os campos.</p>
+                </div>
+            {% endif %}
         </form>
-        {% else %}
-        <div class="alert alert-warning text-center">
-            <p class="mb-0">Não há campos de relatório configurados para o grupo da sua loja.</p>
-            <p class="mb-0 small">Por favor, peça ao administrador para configurar os campos.</p>
-        </div>
-        {% endif %}
     </div>
 </div>
+
+<!-- NOVA SEÇÃO: Histórico de Relatórios Enviados -->
+{% if historico_relatorios %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Seus Últimos Relatórios Enviados</h5>
+    </div>
+    <div class="accordion accordion-flush" id="historicoRelatoriosAccordion">
+        {% for relatorio in historico_relatorios %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-{{ relatorio.info.id }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ relatorio.info.id }}" aria-expanded="false" aria-controls="collapse-{{ relatorio.info.id }}">
+                    <strong>{{ relatorio.info.data_hora }}</strong> - {{ relatorio.info.razao_social }}
+                </button>
+            </h2>
+            <div id="collapse-{{ relatorio.info.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ relatorio.info.id }}" data-bs-parent="#historicoRelatoriosAccordion">
+                <div class="accordion-body">
+                    <ul class="list-group">
+                        {% for dado in relatorio.dados %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ dado.label_campo }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ dado.valor }}</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item">Nenhum dado encontrado para este relatório.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

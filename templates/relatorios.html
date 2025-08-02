@@ -4,35 +4,31 @@
 
 <ul class="nav nav-tabs" id="myTab" role="tablist">
   <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario-tab-pane" type="button" role="tab">Relatórios Diários</button>
+    <button class="nav-link {% if active_tab == 'diario' %}active{% endif %}" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario-tab-pane" type="button" role="tab">Relatórios Diários</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="avancado-tab" data-bs-toggle="tab" data-bs-target="#avancado-tab-pane" type="button" role="tab">Relatórios Avançados</button>
+    <button class="nav-link {% if active_tab == 'avancado' %}active{% endif %}" id="avancado-tab" data-bs-toggle="tab" data-bs-target="#avancado-tab-pane" type="button" role="tab">Relatórios Avançados</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == 'checkin' %}active{% endif %}" id="checkin-tab" data-bs-toggle="tab" data-bs-target="#checkin-tab-pane" type="button" role="tab">Histórico de Check-ins</button>
   </li>
 </ul>
 
 <div class="tab-content card shadow-sm" id="myTabContent">
   <!-- RELATÓRIOS DIÁRIOS -->
-  <div class="tab-pane fade show active p-4" id="diario-tab-pane" role="tabpanel">
-    <h5 class="mb-3">Filtrar Relatórios Diários</h5>
-    <form method="GET" action="{{ url_for('relatorios') }}" class="mb-4 card bg-body-tertiary p-3">
+  <div class="tab-pane fade {% if active_tab == 'diario' %}show active{% endif %} p-4" id="diario-tab-pane" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Filtrar Relatórios Diários</h5>
+        {% if relatorios_diarios %}
+        <a id="exportDiarioBtn" href="#" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Exportar para Excel</a>
+        {% endif %}
+    </div>
+    <form id="formDiario" method="GET" action="{{ url_for('relatorios') }}" class="mb-4 card bg-body-tertiary p-3">
+        <input type="hidden" name="tab" value="diario">
         <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label">Grupo de Lojas</label>
-                <select name="filtro_grupo_id" class="form-select" required>
-                    <option value="">Selecione um grupo...</option>
-                    {% for g in grupos %}
-                    <option value="{{ g.id }}" {% if filtros_diarios.grupo_id == g.id|string %}selected{% endif %}>{{ g.nome }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-5">
-                <label class="form-label">Data</label>
-                <input type="date" name="filtro_data" class="form-control" value="{{ filtros_diarios.data }}">
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button>
-            </div>
+            <div class="col-md-5"><label class="form-label">Grupo de Lojas</label><select name="filtro_grupo_id" class="form-select" required><option value="">Selecione...</option>{% for g in grupos %}<option value="{{ g.id }}" {% if filtros_diarios.grupo_id == g.id|string %}selected{% endif %}>{{ g.nome }}</option>{% endfor %}</select></div>
+            <div class="col-md-5"><label class="form-label">Data</label><input type="date" name="filtro_data" class="form-control" value="{{ filtros_diarios.data }}"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button></div>
         </div>
     </form>
 
@@ -40,169 +36,133 @@
     <div class="accordion">
         {% for relatorio in relatorios_diarios %}
         <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ relatorio.info.id }}">
-                    <strong>{{ relatorio.info.data_hora }}</strong> - {{ relatorio.info.nome_completo }} ({{ relatorio.info.razao_social }})
-                </button>
-            </h2>
-            <div id="collapse-{{ relatorio.info.id }}" class="accordion-collapse collapse">
-                <div class="accordion-body">
-                    <ul class="list-group">
-                        {% for dado in relatorio.dados %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <strong>{{ dado.label_campo }}:</strong>
-                            <span>{{ dado.valor }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ relatorio.info.id }}"><strong>{{ relatorio.info.data_hora }}</strong> - {{ relatorio.info.nome_completo }} ({{ relatorio.info.razao_social }})</button></h2>
+            <div id="collapse-{{ relatorio.info.id }}" class="accordion-collapse collapse"><div class="accordion-body"><ul class="list-group">{% for dado in relatorio.dados %}<li class="list-group-item d-flex justify-content-between"><strong>{{ dado.label_campo }}:</strong><span>{{ dado.valor }}</span></li>{% endfor %}</ul></div></div>
         </div>
         {% endfor %}
     </div>
-    {% elif filtros_diarios.grupo_id %}
+    {% elif request.args.get('filtro_grupo_id') %}
     <p class="text-center text-body-secondary">Nenhum relatório encontrado para os filtros selecionados.</p>
     {% endif %}
   </div>
 
   <!-- RELATÓRIOS AVANÇADOS -->
-  <div class="tab-pane fade p-4" id="avancado-tab-pane" role="tabpanel">
+  <div class="tab-pane fade {% if active_tab == 'avancado' %}show active{% endif %} p-4" id="avancado-tab-pane" role="tabpanel">
     <h5 class="mb-3">Gerar Relatório Avançado</h5>
-    <form method="POST" action="{{ url_for('relatorios') }}" class="mb-4 card bg-body-tertiary p-3">
+    <form id="formAvancado" method="POST" action="{{ url_for('relatorios') }}" class="mb-4 card bg-body-tertiary p-3">
         <div class="row g-3">
-            <div class="col-md-12">
-                <label class="form-label">1. Selecione o Grupo de Lojas</label>
-                <select name="grupo_id" id="grupo_id_avancado" class="form-select" required>
-                    <option value="">Selecione um grupo...</option>
-                    {% for g in grupos %}
-                    <option value="{{ g.id }}" {% if filtros_avancados.get('grupo_id') == g.id|string %}selected{% endif %}>{{ g.nome }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">2. Data Início</label>
-                <input type="date" name="data_inicio" class="form-control" value="{{ filtros_avancados.get('data_inicio','') }}" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Data Fim</label>
-                <input type="date" name="data_fim" class="form-control" value="{{ filtros_avancados.get('data_fim','') }}" required>
-            </div>
-            <div class="col-md-12">
-                <label class="form-label">3. Escolha os Campos e Cálculos</label>
-                <div id="campos-container" class="p-3 border rounded bg-dark-subtle">
-                    {% if campos_disponiveis %}
-                        <table class="table table-dark table-striped table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Campo</th>
-                                    <th class="text-center">Total</th>
-                                    <th class="text-center">Média</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for campo in campos_disponiveis %}
-                                <tr>
-                                    <td class="fw-bold">{{ campo.label_campo }}</td>
-                                    <td class="text-center">
-                                        <input type="checkbox" name="campos" value="{{ campo.id }}_total"
-                                               {% if campo.id ~ '_total' in filtros_avancados.getlist('campos') %}checked{% endif %}>
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="checkbox" name="campos" value="{{ campo.id }}_media"
-                                               {% if campo.id ~ '_media' in filtros_avancados.getlist('campos') %}checked{% endif %}>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <small class="text-body-secondary">Selecione um grupo para carregar os campos disponíveis.</small>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-12">
-                <button class="btn btn-success w-100" type="submit"><i class="bi bi-calculator"></i> Gerar Relatório</button>
-            </div>
+            <div class="col-md-4"><label class="form-label">1. Grupo de Lojas</label><select name="grupo_id" id="grupo_id_avancado" class="form-select" required><option value="">Selecione...</option>{% for g in grupos %}<option value="{{ g.id }}" {% if filtros_avancados.get('grupo_id') == g.id|string %}selected{% endif %}>{{ g.nome }}</option>{% endfor %}</select></div>
+            <div class="col-md-4"><label class="form-label">Promotora</label><select name="promotora_id" class="form-select"><option value="">Todas</option>{% for p in promotoras %}<option value="{{ p.id }}" {% if filtros_avancados.get('promotora_id') == p.id|string %}selected{% endif %}>{{ p.nome_completo }}</option>{% endfor %}</select></div>
+            <div class="col-md-4"><label class="form-label">Loja</label><select name="loja_id" class="form-select"><option value="">Todas</option>{% for l in lojas %}<option value="{{ l.id }}" {% if filtros_avancados.get('loja_id') == l.id|string %}selected{% endif %}>{{ l.razao_social }}</option>{% endfor %}</select></div>
+            <div class="col-md-6"><label class="form-label">2. Data Início</label><input type="date" name="data_inicio" class="form-control" value="{{ filtros_avancados.get('data_inicio', '') }}" required></div>
+            <div class="col-md-6"><label class="form-label">Data Fim</label><input type="date" name="data_fim" class="form-control" value="{{ filtros_avancados.get('data_fim', '') }}" required></div>
+            <div class="col-md-12"><label class="form-label">3. Campos e Cálculos</label><div id="campos-container" class="p-3 border rounded bg-dark-subtle"></div></div>
+            <div class="col-12"><button class="btn btn-success w-100" type="submit"><i class="bi bi-calculator"></i> Gerar Relatório</button></div>
         </div>
     </form>
 
     {% if resultados_avancados %}
-    <h5 class="mt-5">Resultado do Relatório</h5>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    {% for header in headers %}
-                    <th>{{ header }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for linha in resultados_avancados %}
-                <tr>
-                    {% for item in linha %}
-                    <td>{{ "%.2f"|format(item) if item is number else item }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="d-flex justify-content-between align-items-center mt-5">
+        <h5 class="mb-0">Resultado do Relatório</h5>
+        <a id="exportAvancadoBtn" href="#" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Exportar para Excel</a>
     </div>
+    <div class="table-responsive mt-3"><table class="table table-striped table-bordered"><thead class="table-dark"><tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr></thead><tbody>{% for linha in resultados_avancados %}<tr>{% for item in linha %}<td>{{ "%.2f"|format(item) if item is number else item }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
     {% endif %}
+  </div>
+
+  <!-- HISTÓRICO DE CHECK-INS -->
+  <div class="tab-pane fade {% if active_tab == 'checkin' %}show active{% endif %} p-4" id="checkin-tab-pane" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Filtrar Histórico de Check-ins</h5>
+        {% if historico_checkins %}
+        <a id="exportCheckinBtn" href="#" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Exportar para Excel</a>
+        {% endif %}
+    </div>
+    <form id="formCheckin" method="GET" action="{{ url_for('relatorios') }}" class="mb-4 card bg-body-tertiary p-3">
+        <input type="hidden" name="tab" value="checkin">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3"><label class="form-label">Promotora</label><select name="filtro_checkin_promotora_id" class="form-select"><option value="">Todas</option>{% for p in promotoras %}<option value="{{ p.id }}" {% if filtros_checkins.promotora_id == p.id|string %}selected{% endif %}>{{ p.nome_completo }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Loja</label><select name="filtro_checkin_loja_id" class="form-select"><option value="">Todas</option>{% for l in lojas %}<option value="{{ l.id }}" {% if filtros_checkins.loja_id == l.id|string %}selected{% endif %}>{{ l.razao_social }}</option>{% endfor %}</select></div>
+            <div class="col-md-2"><label class="form-label">Data Início</label><input type="date" name="filtro_checkin_data_inicio" class="form-control" value="{{ filtros_checkins.data_inicio }}"></div>
+            <div class="col-md-2"><label class="form-label">Data Fim</label><input type="date" name="filtro_checkin_data_fim" class="form-control" value="{{ filtros_checkins.data_fim }}"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Filtrar</button></div>
+        </div>
+    </form>
+  
+    <div class="table-responsive"><table class="table table-hover table-bordered align-middle"><thead class="table-dark"><tr><th>Data/Hora</th><th>Promotora</th><th>Loja</th><th>Tipo</th><th>Localização</th><th>Imagem</th></tr></thead><tbody>{% for c in historico_checkins %}<tr><td>{{ c.data_hora }}</td><td>{{ c.nome_completo }}</td><td>{{ c.razao_social }}</td><td>{% if c.tipo == 'checkin' %}<span class="badge text-bg-success">Check-in</span>{% else %}<span class="badge text-bg-danger">Checkout</span>{% endif %}</td><td>{% if c.latitude and c.longitude %}<a href="https://www.google.com/maps?q={{c.latitude}},{{c.longitude}}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-geo-alt-fill"></i> Ver no Mapa</a>{% else %}N/A{% endif %}</td><td><a href="{{ url_for('static', filename='uploads/' + c.imagem_path) }}" target="_blank" class="btn btn-sm btn-outline-light"><i class="bi bi-image"></i> Ver Imagem</a></td></tr>{% else %}<tr><td colspan="6" class="text-center text-body-secondary">Nenhum registro encontrado para os filtros selecionados.</td></tr>{% endfor %}</tbody></table></div>
   </div>
 </div>
 
-<script>
-document.getElementById('grupo_id_avancado').addEventListener('change', function() {
-    const grupoId = this.value;
-    const container = document.getElementById('campos-container');
-    container.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Carregando...</span></div>';
+{% endblock %}
 
-    if (!grupoId) {
-        container.innerHTML = '<small class="text-body-secondary">Selecione um grupo para carregar os campos disponíveis.</small>';
-        return;
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Lógica para Relatório Avançado ---
+    const grupoSelect = document.getElementById('grupo_id_avancado');
+    const camposContainer = document.getElementById('campos-container');
+
+    function carregarCampos() {
+        const grupoId = grupoSelect.value;
+        camposContainer.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Carregando...</span></div>';
+
+        if (!grupoId) {
+            camposContainer.innerHTML = '<small class="text-body-secondary">Selecione um grupo para carregar os campos.</small>';
+            return;
+        }
+
+        fetch(`/api/grupo/${grupoId}/campos`)
+            .then(response => response.json())
+            .then(campos => {
+                if (campos.length === 0) {
+                    camposContainer.innerHTML = '<small class="text-body-secondary">Este grupo não possui campos.</small>';
+                    return;
+                }
+                let html = `<table class="table table-dark table-striped table-sm align-middle mb-0"><thead><tr><th>Campo</th><th class="text-center">Total</th><th class="text-center">Média</th></tr></thead><tbody>`;
+                const filtrosAtuais = new URLSearchParams(window.location.search);
+                campos.forEach(campo => {
+                    const totalChecked = filtrosAtuais.getAll('campos').includes(`${campo.id}_total`) ? 'checked' : '';
+                    const mediaChecked = filtrosAtuais.getAll('campos').includes(`${campo.id}_media`) ? 'checked' : '';
+                    html += `<tr><td class="fw-bold">${campo.label_campo}</td><td class="text-center"><input type="checkbox" name="campos" value="${campo.id}_total" ${totalChecked}></td><td class="text-center"><input type="checkbox" name="campos" value="${campo.id}_media" ${mediaChecked}></td></tr>`;
+                });
+                html += `</tbody></table>`;
+                camposContainer.innerHTML = html;
+            });
     }
 
-    fetch(`/api/grupo/${grupoId}/campos`)
-        .then(response => response.json())
-        .then(campos => {
-            if (campos.length === 0) {
-                container.innerHTML = '<small class="text-body-secondary">Este grupo não possui campos personalizados.</small>';
-                return;
-            }
+    if(grupoSelect) {
+        grupoSelect.addEventListener('change', carregarCampos);
+        if(grupoSelect.value) {
+            carregarCampos();
+        } else {
+             camposContainer.innerHTML = '<small class="text-body-secondary">Selecione um grupo para carregar os campos.</small>';
+        }
+    }
 
-            let html = `
-                <table class="table table-dark table-striped table-sm align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Campo</th>
-                            <th class="text-center">Total</th>
-                            <th class="text-center">Média</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            campos.forEach(campo => {
-                html += `
-                    <tr>
-                        <td class="fw-bold">${campo.label_campo}</td>
-                        <td class="text-center">
-                            <input type="checkbox" name="campos" value="${campo.id}_total">
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" name="campos" value="${campo.id}_media">
-                        </td>
-                    </tr>
-                `;
+    // --- Lógica para Botões de Exportação ---
+    function setupExportButton(formId, buttonId, exportUrl) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        
+        const form = document.getElementById(formId);
+        const params = new URLSearchParams(new FormData(form));
+        // Para formulários GET, os parâmetros já estão na URL
+        if(form.method.toLowerCase() === 'get') {
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.forEach((value, key) => {
+                params.set(key, value);
             });
+        }
+        button.href = `${exportUrl}?${params.toString()}`;
+    }
 
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-        });
+    setupExportButton('formDiario', 'exportDiarioBtn', '{{ url_for("exportar_relatorio_diario") }}');
+    setupExportButton('formAvancado', 'exportAvancadoBtn', '{{ url_for("exportar_relatorio_avancado") }}');
+    setupExportButton('formCheckin', 'exportCheckinBtn', '{{ url_for("exportar_historico_checkin") }}');
+    
+    // --- Lógica para manter a aba ativa ---
+    const activeTab = new bootstrap.Tab(document.querySelector('#myTab button[data-bs-target="#{{ active_tab|default('diario-tab-pane') }}"]'));
+    activeTab.show();
 });
-
-// Carregar campos automaticamente se já houver grupo selecionado
-document.getElementById('grupo_id_avancado').dispatchEvent(new Event('change'));
 </script>
 {% endblock %}
