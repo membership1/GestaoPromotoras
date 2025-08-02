@@ -1,4 +1,3 @@
-import sqlite3
 import os
 import math
 import pandas as pd
@@ -37,15 +36,97 @@ def close_connection(exception):
         db.close()
 
 def init_db():
+    # O schema SQL agora está dentro do código para evitar FileNotFoundError no deploy.
+    SCHEMA_SQL = """
+        CREATE TABLE IF NOT EXISTS grupos (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL UNIQUE
+        );
+        CREATE TABLE IF NOT EXISTS lojas (
+            id SERIAL PRIMARY KEY, 
+            razao_social TEXT NOT NULL UNIQUE,
+            bandeira TEXT, 
+            cnpj TEXT UNIQUE, 
+            av_rua TEXT, 
+            cidade TEXT, 
+            uf TEXT,
+            grupo_id INTEGER,
+            FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY, 
+            usuario TEXT NOT NULL UNIQUE,
+            senha_hash TEXT NOT NULL, 
+            tipo TEXT NOT NULL,
+            nome_completo TEXT, 
+            cpf TEXT UNIQUE, 
+            telefone TEXT UNIQUE,
+            cidade TEXT, 
+            uf TEXT, 
+            ativo INTEGER DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS promotora_lojas (
+            id SERIAL PRIMARY KEY,
+            usuario_id INTEGER NOT NULL,
+            loja_id INTEGER NOT NULL,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+            FOREIGN KEY (loja_id) REFERENCES lojas (id) ON DELETE CASCADE,
+            UNIQUE (usuario_id, loja_id)
+        );
+        CREATE TABLE IF NOT EXISTS campos_relatorio (
+            id SERIAL PRIMARY KEY,
+            grupo_id INTEGER NOT NULL,
+            nome_campo TEXT NOT NULL,
+            label_campo TEXT NOT NULL,
+            FOREIGN KEY (grupo_id) REFERENCES grupos(id)
+        );
+        CREATE TABLE IF NOT EXISTS relatorios (
+            id SERIAL PRIMARY KEY, 
+            usuario_id INTEGER NOT NULL, 
+            loja_id INTEGER NOT NULL,
+            data DATE NOT NULL, 
+            data_hora TIMESTAMP NOT NULL,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id), 
+            FOREIGN KEY (loja_id) REFERENCES lojas(id)
+        );
+        CREATE TABLE IF NOT EXISTS dados_relatorio (
+            id SERIAL PRIMARY KEY,
+            relatorio_id INTEGER NOT NULL,
+            campo_id INTEGER NOT NULL,
+            valor TEXT,
+            FOREIGN KEY (relatorio_id) REFERENCES relatorios(id),
+            FOREIGN KEY (campo_id) REFERENCES campos_relatorio(id)
+        );
+        CREATE TABLE IF NOT EXISTS notas_fiscais (
+            id SERIAL PRIMARY KEY, 
+            usuario_id INTEGER NOT NULL, 
+            loja_id INTEGER NOT NULL,
+            nota_img TEXT NOT NULL, 
+            data_hora TIMESTAMP NOT NULL,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id), 
+            FOREIGN KEY (loja_id) REFERENCES lojas(id)
+        );
+        CREATE TABLE IF NOT EXISTS checkins (
+            id SERIAL PRIMARY KEY,
+            usuario_id INTEGER NOT NULL, 
+            loja_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            data_hora TIMESTAMP NOT NULL,
+            latitude REAL, 
+            longitude REAL, 
+            imagem_path TEXT NOT NULL,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id), 
+            FOREIGN KEY (loja_id) REFERENCES lojas(id)
+        );
+    """
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
         # Verifica se a tabela 'usuarios' existe no PostgreSQL
         cursor.execute("SELECT to_regclass('public.usuarios');")
         if cursor.fetchone()[0] is None:
-            with open('schema.sql', 'r') as f:
-                # O executescript não existe no psycopg2, então executamos o script inteiro
-                cursor.execute(f.read())
+            # Executa o schema diretamente da string, eliminando a dependência do ficheiro .sql
+            cursor.execute(SCHEMA_SQL)
             master_pass_hash = generate_password_hash('admin')
             cursor.execute("INSERT INTO usuarios (usuario, senha_hash, tipo, nome_completo) VALUES (%s, %s, %s, %s)",
                            ('master', master_pass_hash, 'master', 'Administrador Master'))
@@ -338,8 +419,6 @@ def gerenciamento():
     cursor.close()
     return render_template('gerenciamento.html', title="Gerenciamento", lojas=lojas_all, promotoras=promotoras, grupos=grupos, lojas_all=lojas_all)
 
-# ... (Restante das funções adaptadas para PostgreSQL) ...
-
 # --- ROTAS DE GRUPOS E LOJAS ---
 @app.route('/admin/grupos')
 def gerenciar_grupos():
@@ -419,7 +498,6 @@ def delete_campo(campo_id):
     cursor.execute("SELECT grupo_id FROM campos_relatorio WHERE id = %s", (campo_id,))
     campo = cursor.fetchone()
     if campo:
-        # Reabre cursor normal para DML
         cursor_dml = db.cursor()
         cursor_dml.execute("DELETE FROM dados_relatorio WHERE campo_id = %s", (campo_id,))
         cursor_dml.execute("DELETE FROM campos_relatorio WHERE id = %s", (campo_id,))
@@ -546,7 +624,6 @@ def relatorios():
     resultados_avancados = []
     headers = []
     if request.method == 'POST' and filtros_avancados.getlist('campos'):
-        # Lógica de construção e execução da query avançada...
         campos_selecionados = filtros_avancados.getlist('campos')
         data_inicio = filtros_avancados.get('data_inicio')
         data_fim = filtros_avancados.get('data_fim')
@@ -884,3 +961,4 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
 
+" in the canv
